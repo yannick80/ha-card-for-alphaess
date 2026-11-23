@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Sensor values, setup or missing entities (AlphaESS Modbus TCP)
+    url: https://github.com/senalse/ha-alphaess-modbus/issues
+    about: Problems with the inverter's sensors themselves belong to the AlphaESS Modbus TCP integration.

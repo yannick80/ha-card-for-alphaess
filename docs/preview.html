@@ -1,0 +1,113 @@
+<!doctype html>
+<!-- Renders the README preview images: the real card from dist/ with mocked
+     ha-card / ha-icon and a mocked hass object. Not Home Assistant itself.
+
+     Parameters:  ?lang=en|de   ?layout=themes|phone
+
+     Regenerate all images from the repo root:  sh docs/render-previews.sh -->
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body { margin: 0; font-family: Roboto, -apple-system, "Segoe UI", sans-serif; display: flex; }
+  .theme { flex: none; padding: 16px; }
+  /* sections dashboard: a full-width card (12 of 12 columns) is ~498 px wide, 3 rows = 184 px high */
+  .themes .theme alphaess-card { display: block; width: 498px; height: 184px; margin-bottom: 12px; }
+  .phone .theme alphaess-card { display: block; width: 360px; height: 184px; margin-bottom: 12px; }
+  .theme h2 { margin: 0 4px 10px; font-size: 16px; font-weight: 400; color: var(--secondary-text-color); }
+
+  .light {
+    background: #f2f2f2; --card-background-color: #fff; --ha-card-border-color: #e0e0e0;
+    --primary-text-color: #212121; --secondary-text-color: #727272; --disabled-color: #bdbdbd;
+    --primary-color: #03a9f4;
+  }
+  .dark {
+    background: #111; --card-background-color: #1c1c1c; --ha-card-border-color: #2c2c2c;
+    --primary-text-color: #e1e1e1; --secondary-text-color: #9b9b9b; --disabled-color: #6f6f6f;
+    --primary-color: #03a9f4;
+  }
+</style>
+</head>
+<body>
+<script type="module">
+  import * as mdi from "https://cdn.jsdelivr.net/npm/@mdi/js@7.4.47/mdi.js";
+  const path = (name) => mdi["mdi" + name.replace(/^mdi:/, "").split("-").map((p) => p[0].toUpperCase() + p.slice(1)).join("")] || "";
+
+  customElements.define("ha-card", class extends HTMLElement {
+    constructor() {
+      super();
+      this.attachShadow({ mode: "open" }).innerHTML =
+        `<style>:host{display:block;background:var(--card-background-color);border:1px solid var(--ha-card-border-color);border-radius:12px}</style><slot></slot>`;
+    }
+  });
+  customElements.define("ha-icon", class extends HTMLElement {
+    static get observedAttributes() { return ["icon"]; }
+    attributeChangedCallback() {
+      this.innerHTML = `<svg viewBox="0 0 24 24" style="display:block;width:var(--mdc-icon-size,24px);height:var(--mdc-icon-size,24px);fill:currentColor"><path d="${path(this.getAttribute("icon"))}"/></svg>`;
+    }
+  });
+
+  await import("../dist/alphaess-card.js");
+
+  const params = new URLSearchParams(location.search);
+  const lang = params.get("lang") === "de" ? "de" : "en";
+  const layout = params.get("layout") === "phone" ? "phone" : "themes";
+
+  // object IDs as the integration creates them for a device named "AlphaESS Inverter"
+  const IDS = {
+    pv_power: ["current_pv_production", "W"],
+    load_power: ["current_house_load", "W"],
+    grid_power: ["grid_power", "W"],
+    battery_power: ["battery_power", "W"],
+    battery_soc: ["battery_state_of_charge", "%"],
+    pv_today: ["today_s_pv_generation", "kWh", "today_pv_generation"],
+    grid_import_today: ["today_s_energy_from_grid", "kWh", "today_energy_from_grid"],
+    grid_export_today: ["today_s_energy_feed_to_grid", "kWh", "today_energy_feed_to_grid"],
+    battery_charge_today: ["today_s_battery_charged", "kWh", "today_battery_charged"],
+    battery_discharge_today: ["today_s_battery_discharged", "kWh", "today_battery_discharged"],
+  };
+
+  function hass(values) {
+    const h = {
+      locale: { language: lang, number_format: "language" }, language: lang,
+      devices: { inv: { id: "inv", name: "AlphaESS Inverter" } }, entities: {}, states: {},
+    };
+    for (const [role, [obj, unit, key]] of Object.entries(IDS)) {
+      const id = `sensor.alphaess_inverter_${obj}`;
+      h.entities[id] = { entity_id: id, device_id: "inv", platform: "alphaess_modbus", translation_key: key || null };
+      if (values[role] !== undefined) {
+        h.states[id] = { entity_id: id, state: String(values[role]), attributes: { unit_of_measurement: unit } };
+      }
+    }
+    return h;
+  }
+
+  const TODAY = { pv_today: 18.4, grid_import_today: 2.1, grid_export_today: 9.7, battery_charge_today: 6.2, battery_discharge_today: 3.9 };
+  const SCENES = {
+    en: [["Midday: solar charges the battery and exports", { pv_power: 4820, load_power: 1240, grid_power: -2310, battery_power: -1270, battery_soc: 64, ...TODAY }],
+         ["Evening: battery powers the house", { pv_power: 0, load_power: 860, grid_power: 4, battery_power: 856, battery_soc: 41, ...TODAY }],
+         ["Night: battery empty, importing", { pv_power: 0, load_power: 620, grid_power: 618, battery_power: 0, battery_soc: 10, ...TODAY }]],
+    de: [["Mittag: PV lädt den Akku und speist ein", { pv_power: 4820, load_power: 1240, grid_power: -2310, battery_power: -1270, battery_soc: 64, ...TODAY }],
+         ["Abend: der Akku versorgt das Haus", { pv_power: 0, load_power: 860, grid_power: 4, battery_power: 856, battery_soc: 41, ...TODAY }],
+         ["Nacht: Akku leer, Netzbezug", { pv_power: 0, load_power: 620, grid_power: 618, battery_power: 0, battery_soc: 10, ...TODAY }]],
+  }[lang];
+
+  document.body.className = layout;
+  for (const theme of ["light", "dark"]) {
+    const col = document.createElement("div");
+    col.className = `theme ${theme}`;
+    document.body.appendChild(col);
+    const scenes = layout === "phone" ? SCENES.slice(0, 2) : SCENES;
+    for (const [caption, values] of scenes) {
+      const h2 = document.createElement("h2");
+      h2.textContent = caption;
+      col.appendChild(h2);
+      const card = document.createElement("alphaess-card");
+      col.appendChild(card);
+      card.setConfig({ type: "custom:alphaess-card", device: "inv" });
+      card.hass = hass(values);
+    }
+  }
+</script>
+</body>
+</html>
