@@ -6,6 +6,9 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Changed
+- License: copyright holder written as full name.
+
 ## 0.1.0
 Initial release: live power of solar, home, grid and battery with state of
 charge, today's energy and self-sufficiency, fixed to 12 × 3 in a sections
