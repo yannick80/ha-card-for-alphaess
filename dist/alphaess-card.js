@@ -13,7 +13,7 @@
 (function () {
 "use strict";
 
-const VERSION = "0.1.0";
+const VERSION = "0.1.1";
 const DOMAIN = "alphaess_modbus";
 const CARD = "alphaess-card";
 

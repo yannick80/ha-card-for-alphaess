@@ -112,7 +112,7 @@ The card is fixed to the full width (12 columns) and 3 rows of a sections dashbo
 2. Copy it to `config/www/alphaess-card.js` (the `www` folder next to `configuration.yaml`; create it if it does not exist).
 3. Go to **Settings** > **Dashboards**, select the three dots, then **Resources**.
    (No **Resources** entry? Turn on **Advanced mode** in your user profile first.)
-4. Select **Add resource**, enter `/local/alphaess-card.js?v=0.1.0`, choose **JavaScript module** and select **Create**.
+4. Select **Add resource**, enter `/local/alphaess-card.js?v=0.1.1`, choose **JavaScript module** and select **Create**.
    Raise the `?v=` number after each update so browsers load the new file.
 5. Reload the browser.
 <!-- ha-marketplace:exclude-end -->
@@ -185,7 +185,7 @@ Self-sufficiency needs all five daily energy sensors, including *Today's Battery
 
 ### The card still shows the old version after an update
 
-Reload the browser with the cache cleared. The browser console (F12) shows the loaded version as `alphaess-card 0.1.0`.
+Reload the browser with the cache cleared. The browser console (F12) shows the loaded version as `alphaess-card 0.1.1`.
 
 ## For developers
 
